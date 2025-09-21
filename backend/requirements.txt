@@ -1,0 +1,36 @@
+# DULMS_Watcher/backend/requirements.txt
+
+# Web Framework & Server
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic[email]
+
+# Web Scraping
+selenium
+Pillow
+requests
+
+# CAPTCHA Services
+nopecha
+
+# Background Tasks & Scheduling
+celery
+redis
+
+# Database & Auth
+supabase
+cryptography
+pyjwt
+python-jose[cryptography]
+svix
+
+sib-api-v3-sdk
+python-telegram-bot
+
+# Utility
+psycopg2-binary
+pytz # For timezone handling
+
+psutil  # For system resource monitoring
+urllib3  # For enhanced HTTP handling

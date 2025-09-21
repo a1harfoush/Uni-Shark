@@ -1,0 +1,48 @@
+# DULMS_Watcher/docker-compose.yml
+
+services:
+  redis:
+    image: "redis:7-alpine"
+    environment:
+      - TZ=Africa/Cairo
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+      - /etc/localtime:/etc/localtime:ro
+
+  backend-base: &backend-base
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - TZ=Africa/Cairo
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+      - /etc/localtime:/etc/localtime:ro
+
+  api:
+    <<: *backend-base
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+
+  worker-manual:
+    <<: *backend-base
+    command: celery -A tasks worker --loglevel=info -Q manual -c 2
+
+  worker-background:
+    <<: *backend-base
+    command: celery -A tasks worker --loglevel=info -Q background -c 3
+
+  scheduler:
+    <<: *backend-base
+    # Revert to the standard celery beat command.
+    command: celery -A tasks beat --loglevel=info
+
+volumes:
+  redis_data:
