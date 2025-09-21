@@ -1,4 +1,4 @@
-# DULMS Watcher - University Course Monitoring System
+# Uni Shark - University Course Monitoring System
 
 A comprehensive web application that monitors university course information, assignments, and deadlines with automated notifications.
 
