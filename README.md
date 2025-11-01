@@ -10,6 +10,7 @@ A comprehensive web application that monitors university course information, ass
 - **Queue**: Redis
 - **Authentication**: Clerk
 - **Notifications**: Email (Brevo) + Telegram Bot
+- **Telegram Bot**: Standalone service for instant notifications
 
 ## 🚀 Deployment
 
@@ -35,7 +36,11 @@ npm start
 ### Using Docker Compose (Full Stack)
 
 ```bash
+# Start all services including Telegram bot
 docker-compose up -d
+
+# Or use the enhanced startup script (Windows)
+start_all_services_with_telegram.bat
 ```
 
 ## 📋 Environment Variables
@@ -86,7 +91,7 @@ DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
 
 1. **Start Redis**:
    ```bash
-   ./start_redis_docker.bat
+   docker run -d -p 6379:6379 redis:7-alpine
    ```
 
 2. **Backend**:
@@ -100,7 +105,8 @@ DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
 
 3. **Celery Worker**:
    ```bash
-   ./start_celery_worker.bat
+   cd backend
+   celery -A tasks worker --loglevel=info
    ```
 
 4. **Frontend**:
@@ -121,6 +127,8 @@ DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
 │   ├── utils/              # Utility functions
 │   ├── main.py             # FastAPI app entry point
 │   ├── tasks.py            # Celery tasks
+│   ├── telegram_bot.py     # Telegram bot service
+│   ├── start_telegram_bot.py # Enhanced bot startup script
 │   └── requirements.txt    # Python dependencies
 ├── frontend/               # Next.js frontend
 │   ├── src/
@@ -141,18 +149,57 @@ DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
 - **Responsive Design**: Mobile-friendly interface
 - **Secure Authentication**: Clerk-based user management
 
-## 🛠️ Development Scripts
+## 🛠️ Development Commands
 
-- `start_redis_docker.bat` - Start Redis with Docker
-- `start_celery_worker.bat` - Start Celery worker
-- `start_celery_beat.bat` - Start Celery scheduler
-- `check_redis.py` - Verify Redis connection
+- `docker-compose up -d` - Start all services
+- `docker-compose logs -f [service]` - View service logs
+- `celery -A tasks worker --loglevel=info` - Start Celery worker
+- `celery -A tasks beat --loglevel=info` - Start Celery scheduler
+
+## 🤖 Telegram Bot Setup
+
+The Telegram bot provides instant notifications for assignments, quizzes, and deadlines.
+
+### Bot Configuration
+
+1. **Create a Telegram Bot**:
+   - Message [@BotFather](https://t.me/botfather) on Telegram
+   - Use `/newbot` command and follow instructions
+   - Copy the bot token to your `.env` file
+
+2. **Add Bot Token to Environment**:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   ```
+
+3. **Start the Bot**:
+   ```bash
+   # With Docker Compose (recommended)
+   docker-compose up -d telegram-bot
+   
+   # Or standalone
+   cd backend
+   python telegram_bot.py
+   ```
+
+4. **Connect Users**:
+   - Users start the bot with `/start`
+   - Bot provides their unique Chat ID
+   - Users add Chat ID to their UniShark settings
+
+### Bot Features
+
+- **Welcome Message**: Provides user's unique Chat ID
+- **Instant Notifications**: Assignment and quiz alerts
+- **Deadline Reminders**: Automated deadline notifications
+- **Error Handling**: Robust restart and retry logic
 
 ## 📊 Monitoring
 
 - Backend health check: `GET /api/health`
 - Task status: `GET /api/scrape/task-status/{task_id}`
 - Scheduler status: `GET /api/scheduler-status`
+- Telegram bot status: `docker-compose logs telegram-bot`
 
 ## 🔒 Security
 

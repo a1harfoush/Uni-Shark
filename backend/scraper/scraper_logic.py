@@ -24,6 +24,11 @@ from datetime import datetime, timedelta
 import traceback
 import nopecha
 
+class CaptchaApiKeysRequiredError(Exception):
+    """Custom exception for when CAPTCHA is present but no valid API keys are provided"""
+    pass
+
+
 # --- Constants ---
 DEFAULT_TIMEOUT = 30 # Increased default timeout
 POLL_FREQUENCY = 0.2
@@ -49,7 +54,7 @@ def initialize_driver(headless=True):
     if headless: 
         options.add_argument("--headless=new")
     
-    # Core stability options from working main_final.py
+    # Core stability options optimized for DULMS
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--log-level=3")
@@ -58,17 +63,7 @@ def initialize_driver(headless=True):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     
-    # Additional stability options for containerized environment
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-plugins")
-    options.add_argument("--disable-web-security")
-    options.add_argument("--disable-features=VizDisplayCompositor")
-    options.add_argument("--disable-background-timer-throttling")
-    options.add_argument("--disable-backgrounding-occluded-windows")
-    options.add_argument("--disable-renderer-backgrounding")
-    options.add_argument("--memory-pressure-off")
-    
-    # Set page load strategy
+    # Set page load strategy for better performance
     options.page_load_strategy = 'normal'
     
     try:
@@ -99,12 +94,14 @@ def safe_get_text(element):
     return element.text.strip() if element else ""
 
 def click_element_robustly(driver, element_or_locator, timeout=20):
-    """Enhanced robust clicking with multiple strategies"""
+    """Optimized robust clicking for DULMS with proven strategies"""
     if not element_or_locator:
         return False
     
+    element = None
+    
     try:
-        # Strategy 1: Standard Selenium click
+        # Handle both element and locator inputs
         if isinstance(element_or_locator, tuple):
             element = WebDriverWait(driver, timeout).until(
                 EC.element_to_be_clickable(element_or_locator)
@@ -115,44 +112,30 @@ def click_element_robustly(driver, element_or_locator, timeout=20):
                 EC.element_to_be_clickable(element)
             )
 
-        # Scroll into view with better positioning
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block: 'center', inline: 'center', behavior: 'smooth'});", 
-            element
-        )
-        time.sleep(1)
-
-        # Try standard click
+        # Strategy 1: Standard click with element_to_be_clickable wait
         element.click()
         logger.debug("Standard click successful")
         return True
 
-    except Exception as e:
-        logger.warning(f"Standard click failed: {e}. Trying alternative methods.")
+    except (ElementClickInterceptedException, StaleElementReferenceException, TimeoutException) as e:
+        logger.warning(f"Standard click failed for {element.tag_name if element else 'unknown'}: {e}. Trying JS click.")
         
         try:
-            # Strategy 2: JavaScript click
+            # Strategy 2: JavaScript click with scroll into view (optimized for DULMS)
             if isinstance(element_or_locator, tuple):
                 element = driver.find_element(*element_or_locator)
             
-            driver.execute_script("arguments[0].click();", element)
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", element)
             logger.debug("JavaScript click successful")
             return True
             
         except Exception as js_e:
-            logger.warning(f"JavaScript click failed: {js_e}. Trying action chains.")
-            
-            try:
-                # Strategy 3: Action chains
-                from selenium.webdriver.common.action_chains import ActionChains
-                actions = ActionChains(driver)
-                actions.move_to_element(element).click().perform()
-                logger.debug("Action chains click successful")
-                return True
-                
-            except Exception as action_e:
-                logger.error(f"All click strategies failed. Final error: {action_e}")
-                return False
+            logger.error(f"JavaScript click also failed: {js_e}")
+            return False
+    
+    except Exception as e:
+        logger.error(f"An unexpected error occurred during click: {e}")
+        return False
 
 def dismiss_notifications(driver):
     try:
@@ -415,16 +398,119 @@ def solve_captcha(fcb_api_key, nopecha_api_key, image_base64):
         logger.error(f"Both CAPTCHA services failed after {total_time:.1f}s: {nopecha_error}")
         raise Exception("Both CAPTCHA services failed.") from nopecha_error
 
+def handle_captcha_conditionally(driver, fcb_api_key, nopecha_api_key):
+    """
+    Enhanced CAPTCHA handling with conditional logic:
+    1. Check if CAPTCHA exists
+    2. If no CAPTCHA - continue without solving
+    3. If CAPTCHA exists but no valid API keys - raise specific error for user suspension
+    4. If CAPTCHA exists with valid API keys - solve and continue
+    """
+    logger.info("Checking for CAPTCHA presence...")
+    
+    # Check if CAPTCHA input field exists and is visible (quick check)
+    captcha_input = None
+    try:
+        # Use a very short timeout since CAPTCHA is temporarily removed
+        captcha_input = WebDriverWait(driver, 1).until(
+            EC.presence_of_element_located((By.ID, "txt_captcha"))
+        )
+        # Double-check if it's actually visible
+        if not captcha_input.is_displayed():
+            logger.info("CAPTCHA input field exists but not visible - proceeding without CAPTCHA solving")
+            return True
+    except TimeoutException:
+        logger.info("No CAPTCHA input field found - proceeding without CAPTCHA solving")
+        return True  # No CAPTCHA present, continue
+    
+    if not captcha_input:
+        logger.info("CAPTCHA input field not found - proceeding without CAPTCHA solving")
+        return True
+    
+    logger.info("CAPTCHA input field detected - checking for CAPTCHA image...")
+    
+    # Check if CAPTCHA image is actually present
+    captcha_image_present = False
+    selectors = [
+        "div.captach img",      # Original selector (with typo)
+        "div.captcha img",      # Corrected selector
+        ".captcha img",         # Alternative
+        "img[src*='captcha']",  # Generic captcha image
+        "#captcha img"          # ID-based selector
+    ]
+    
+    for selector in selectors:
+        try:
+            # Use shorter timeout since CAPTCHA is temporarily removed
+            captcha_img = WebDriverWait(driver, 0.5).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, selector))
+            )
+            if captcha_img and captcha_img.is_displayed():
+                logger.info(f"CAPTCHA image found using selector: {selector}")
+                captcha_image_present = True
+                break
+        except TimeoutException:
+            continue
+    
+    if not captcha_image_present:
+        logger.info("CAPTCHA input field exists but no CAPTCHA image found - proceeding without solving")
+        return True
+    
+    logger.info("CAPTCHA image detected - validating API keys...")
+    
+    # CAPTCHA is present, validate API keys
+    if not validate_captcha_services(fcb_api_key, nopecha_api_key):
+        logger.error("CAPTCHA is present but no valid API keys provided")
+        raise CaptchaApiKeysRequiredError(
+            "CAPTCHA detected but no valid API keys provided. "
+            "Please add your CAPTCHA solving API keys in settings to continue automated scraping."
+        )
+    
+    logger.info("Valid CAPTCHA API keys found - proceeding with CAPTCHA solving...")
+    
+    # Solve CAPTCHA with retry logic
+    for captcha_attempt in range(2):
+        try:
+            captcha_base64 = get_captcha_image_base64(driver)
+            captcha_solution = solve_captcha(fcb_api_key, nopecha_api_key, captcha_base64)
+            
+            # Re-find captcha input to avoid stale reference
+            captcha_input = wait_for_element(driver, By.ID, "txt_captcha", timeout=10)
+            if not captcha_input:
+                raise Exception("CAPTCHA input field not found after solving.")
+            
+            # Clear and enter CAPTCHA with multiple strategies
+            try:
+                captcha_input.clear()
+                captcha_input.send_keys(captcha_solution)
+            except Exception as clear_error:
+                logging.warning(f"Standard CAPTCHA input failed: {clear_error}. Trying JavaScript.")
+                driver.execute_script("arguments[0].value = '';", captcha_input)
+                driver.execute_script("arguments[0].value = arguments[1];", captcha_input, captcha_solution)
+            
+            logger.info("CAPTCHA solved and entered successfully")
+            return True
+            
+        except Exception as captcha_error:
+            logging.warning(f"CAPTCHA attempt {captcha_attempt + 1} failed: {captcha_error}")
+            if captcha_attempt == 1:
+                raise Exception(f"CAPTCHA solving failed after retries: {captcha_error}")
+            time.sleep(2)
+    
+    return False
+
+
 def get_captcha_image_base64(driver):
+    """Optimized CAPTCHA image capture with multiple selector fallbacks."""
     logger.info("Capturing CAPTCHA image...")
     try:
-        # Try multiple possible selectors for CAPTCHA image
+        # Try multiple possible selectors for CAPTCHA image (optimized order)
         selectors = [
-            "div.captach img",  # Original selector (with typo)
-            "div.captcha img",  # Corrected selector
-            ".captcha img",     # Alternative
-            "img[src*='captcha']", # Generic captcha image
-            "#captcha img"      # ID-based selector
+            "div.captach img",      # Original selector (with typo) - most common
+            "div.captcha img",      # Corrected selector
+            ".captcha img",         # Alternative
+            "img[src*='captcha']",  # Generic captcha image
+            "#captcha img"          # ID-based selector
         ]
         
         captcha_img_element = None
@@ -441,12 +527,13 @@ def get_captcha_image_base64(driver):
         if not captcha_img_element:
             raise Exception("Could not find CAPTCHA image with any known selector")
         
-        # Scroll into view and capture
+        # Scroll into view and capture (optimized)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", captcha_img_element)
         time.sleep(0.2)
         img_bytes = captcha_img_element.screenshot_as_png
         logger.info("Captured CAPTCHA using element screenshot.")
         return base64.b64encode(img_bytes).decode('utf-8')
+        
     except Exception as e:
         logger.error(f"Failed to capture CAPTCHA image: {e}")
         raise
@@ -485,38 +572,12 @@ def login(driver, username, password, fcb_api_key, nopecha_api_key):
                 driver.execute_script("arguments[0].value = arguments[1];", username_field, username)
                 driver.execute_script("arguments[0].value = arguments[1];", password_field, password)
 
-            # Handle CAPTCHA with retry logic
-            captcha_solved = False
-            for captcha_attempt in range(2):
-                try:
-                    captcha_base64 = get_captcha_image_base64(driver)
-                    captcha_solution = solve_captcha(fcb_api_key, nopecha_api_key, captcha_base64)
-                    
-                    # Re-find captcha input to avoid stale reference
-                    captcha_input = wait_for_element(driver, By.ID, "txt_captcha", timeout=10)
-                    if not captcha_input:
-                        raise Exception("CAPTCHA input field not found after solving.")
-                    
-                    # Clear and enter CAPTCHA with multiple strategies
-                    try:
-                        captcha_input.clear()
-                        captcha_input.send_keys(captcha_solution)
-                    except Exception as clear_error:
-                        logging.warning(f"Standard CAPTCHA input failed: {clear_error}. Trying JavaScript.")
-                        driver.execute_script("arguments[0].value = '';", captcha_input)
-                        driver.execute_script("arguments[0].value = arguments[1];", captcha_input, captcha_solution)
-                    
-                    captcha_solved = True
-                    break
-                    
-                except Exception as captcha_error:
-                    logging.warning(f"CAPTCHA attempt {captcha_attempt + 1} failed: {captcha_error}")
-                    if captcha_attempt == 1:
-                        raise Exception(f"CAPTCHA solving failed after retries: {captcha_error}")
-                    time.sleep(2)
-            
-            if not captcha_solved:
-                raise Exception("Failed to solve CAPTCHA")
+            # Enhanced CAPTCHA handling with conditional logic
+            logging.info("Starting CAPTCHA conditional handling...")
+            captcha_handled = handle_captcha_conditionally(driver, fcb_api_key, nopecha_api_key)
+            if not captcha_handled:
+                raise Exception("CAPTCHA handling failed - check API keys and try again")
+            logging.info("CAPTCHA handling completed successfully")
             
             # Submit form with multiple strategies
             try:
@@ -691,7 +752,7 @@ def navigate_to_page(driver, url, wait_element_selector):
 
 def expand_course_panel(driver, course_element, max_retries=2):
     """
-    Expand course panel with robust strategy based on working main_final.py
+    Optimized course panel expansion with proven DULMS strategies
     """
     try:
         # Find the panel collapse element
@@ -702,36 +763,130 @@ def expand_course_panel(driver, course_element, max_retries=2):
             logger.debug("Panel already expanded")
             return True
         
-        # Find the toggle element - use the exact selector from working script
-        try:
-            toggle_element = course_element.find_element(By.CSS_SELECTOR, ".accordion-toggle")
-        except NoSuchElementException:
-            try:
-                toggle_element = course_element.find_element(By.CSS_SELECTOR, "a[data-toggle='collapse']")
-            except NoSuchElementException:
-                logger.error("No toggle element found for panel expansion")
-                return False
+        # Find the toggle element using multiple selectors (optimized order)
+        toggle_element = None
+        selectors = [".accordion-toggle", "a[data-toggle='collapse']"]
         
-        # Click the toggle element
-        if click_element_robustly(driver, toggle_element, timeout=10):
-            # Wait for expansion - check for 'in' class
+        for selector in selectors:
             try:
-                WebDriverWait(driver, 5).until(
-                    lambda d: "in" in panel.get_attribute("class")
-                )
-                time.sleep(0.5)  # Small wait for content to load
-                logger.debug("Panel expanded successfully")
-                return True
-            except TimeoutException:
-                logger.warning("Panel expansion timeout - panel may not have expanded")
-                return False
-        else:
-            logger.warning("Toggle click failed")
+                toggle_element = course_element.find_element(By.CSS_SELECTOR, selector)
+                break
+            except NoSuchElementException:
+                continue
+        
+        if not toggle_element:
+            logger.error("No toggle element found for panel expansion")
+            return False
+        
+        # Use JavaScript click directly for better reliability with DULMS
+        try:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", toggle_element)
+            
+            # Wait for expansion - check for 'in' class
+            WebDriverWait(driver, 5).until(
+                lambda d: "in" in panel.get_attribute("class")
+            )
+            time.sleep(0.5)  # Small wait for content to load
+            logger.debug("Panel expanded successfully")
+            return True
+            
+        except TimeoutException:
+            logger.warning("Panel expansion timeout - panel may not have expanded")
             return False
             
     except Exception as e:
         logger.error(f"Error expanding course panel: {e}")
         return False
+
+# --- Optimized Generic Parsing Functions ---
+
+def _parse_quiz_item(item_element, course_name):
+    """Parses a single quiz item. Returns data and grade status."""
+    quiz_data = {"course": course_name, "type": "Quiz"}
+    
+    # Extract quiz name
+    quiz_data["name"] = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, "a.quiz-name")) or "Unnamed Quiz"
+    
+    # Extract status/deadline
+    raw_status = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".quiz-status"))
+    quiz_data["closed_at"] = raw_status.split("Closed at:")[-1].strip() if "Closed at:" in raw_status else raw_status
+    
+    # Check for grade
+    grade_text = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".graded-status"))
+    quiz_data["grade"] = grade_text if grade_text and grade_text != "--" else "Not Graded"
+    
+    has_grade = quiz_data["grade"] != "Not Graded"
+    return quiz_data, has_grade
+
+def _parse_assignment_item(item_element, course_name):
+    """Parses a single assignment item. Returns data."""
+    assignment_data = {"course": course_name, "type": "Assignment"}
+    
+    # Extract assignment name
+    assignment_data["name"] = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".assign-name")) or "Unnamed Assignment"
+    
+    # Extract submit status
+    assignment_data["submit_status"] = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".submit-status")) or "Status Unknown"
+    
+    # Extract deadline
+    raw_date = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".assign-status"))
+    assignment_data["closed_at"] = raw_date.split("Closed at:")[-1].strip() if "Closed at:" in raw_date else raw_date
+    
+    # Extract grading status
+    assignment_data["grading_status"] = safe_get_text(safe_find_element(item_element, By.CSS_SELECTOR, ".graded-status")) or "Not Graded Yet"
+    
+    return assignment_data, None
+
+def _scrape_accordion_page(driver, page_name, item_selector, item_parser_func):
+    """Generic optimized function for scraping accordion-style pages (Quizzes/Assignments)."""
+    logger.info(f"Starting {page_name} data extraction...")
+    results = {
+        "items_with_results": [],
+        "items_without_results": [],
+        "courses_processed": 0,
+        "total_items_found": 0,
+        "courses_found_on_page": [],
+        "courses_with_no_items": [],
+        "courses_failed_expansion": []
+    }
+    
+    try:
+        courses = driver.find_elements(By.CSS_SELECTOR, "section.course-item")
+        logger.info(f"Found {len(courses)} course sections on the {page_name} page.")
+        
+        for course in courses:
+            try:
+                course_name = safe_get_text(safe_find_element(course, By.CSS_SELECTOR, "strong.course-name")) or "Unknown Course"
+                results["courses_found_on_page"].append(course_name)
+                
+                if not expand_course_panel(driver, course):
+                    results["courses_failed_expansion"].append(course_name)
+                    continue
+                
+                results["courses_processed"] += 1
+                
+                items = course.find_elements(By.CSS_SELECTOR, item_selector)
+                if not items:
+                    results["courses_with_no_items"].append(course_name)
+                    continue
+                
+                for item in items:
+                    results["total_items_found"] += 1
+                    parsed_data, has_grade = item_parser_func(item, course_name)
+                    
+                    if has_grade:
+                        results["items_with_results"].append(parsed_data)
+                    else:
+                        results["items_without_results"].append(parsed_data)
+                        
+            except StaleElementReferenceException:
+                logger.warning(f"Stale element on {page_name} page. Skipping a course section.")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Major error during {page_name} extraction: {e}", exc_info=True)
+    
+    return results
 
 # --- Data Scraping Functions ---
 def scrape_quizzes(driver):
@@ -875,57 +1030,71 @@ def scrape_assignments(driver):
 
 def scrape_absence_data(driver):
     """
-    (REFINED) Scrapes absence data from the absence page based on actual HTML structure.
-    Based on working main_final.py script.
+    Optimized absence data scraping with 'Expand All' strategy from refactored code.
     """
     logger.info("Starting absence data extraction...")
     absences = []
+    
     try:
-        # CORRECTED: Use the correct selector for course containers on the absence page.
+        # First, try to click the "Expand All" button for efficiency
+        try:
+            expand_all_btn = wait_for_element(driver, By.CSS_SELECTOR, "span.c-p.more.exp-coll.pull-right.m-b-sm.m-r-lg", timeout=10)
+            if expand_all_btn and expand_all_btn.is_displayed():
+                logger.info("Clicking 'Expand All' button...")
+                if click_element_robustly(driver, expand_all_btn):
+                    # Wait for all courses to expand - wait for collapse elements to be visible
+                    WebDriverWait(driver, 10).until(
+                        lambda d: len(d.find_elements(By.CSS_SELECTOR, "div.panel-collapse.in")) > 0
+                    )
+                    time.sleep(2)  # Additional wait for full page load
+                    logger.info("All courses expanded successfully.")
+                else:
+                    logger.warning("Failed to click 'Expand All' button, falling back to individual expansion.")
+            else:
+                logger.info("Expand All button not found or not visible.")
+        except (TimeoutException, NoSuchElementException) as e:
+            logger.info(f"Expand All button not found: {e}. Proceeding with individual course expansion.")
+        
+        # Now scrape data from all course containers
         course_containers = driver.find_elements(By.CSS_SELECTOR, "div.panel-group.course-grp")
-        logger.info(f"Found {len(course_containers)} course containers for absence checking.")
-
+        logger.info(f"Found {len(course_containers)} course sections on the absence page.")
+        
         for course in course_containers:
-            # CORRECTED: Find course name from the correct element.
-            course_name_elem = safe_find_element(course, By.CSS_SELECTOR, "a.accordion-toggle span")
-            course_name = safe_get_text(course_name_elem) or "Unknown Course"
-            
-            if not expand_course_panel(driver, course):
-                logger.warning(f"Could not expand panel for {course_name} (Absence), skipping.")
-                continue
-            
-            # CORRECTED: Look for rows with absence status using the correct selector
-            # Based on HTML structure: <i class="fa fa-times text-danger"></i>Absence
-            absence_rows = course.find_elements(By.XPATH, ".//tr[td[contains(@class, 'text-danger') or contains(., 'Absence')]]")
-            
-            if not absence_rows:
-                logger.info(f"No absence records found in expanded section for {course_name}.")
-                continue
-            
-            logger.info(f"Found {len(absence_rows)} potential absence records in {course_name}.")
-            
-            for row in absence_rows:
-                cells = row.find_elements(By.TAG_NAME, "td")
-                # Ensure the row has enough cells to prevent IndexError
-                if len(cells) >= 4:
-                    # Check if this row actually contains an absence (4th column has "Absence" text)
-                    status_cell = cells[3]
-                    status_text = safe_get_text(status_cell)
-                    
-                    # Only add if it's actually an absence record
-                    if "Absence" in status_text or status_cell.find_elements(By.CSS_SELECTOR, ".fa-times.text-danger"):
+            try:
+                course_name = safe_get_text(safe_find_element(course, By.CSS_SELECTOR, "a.accordion-toggle span")) or "Unknown"
+                
+                # Check if course is already expanded (has "in" class in panel-collapse)
+                panel_collapse = safe_find_element(course, By.CSS_SELECTOR, ".panel-collapse")
+                if panel_collapse and "in" not in panel_collapse.get_attribute("class"):
+                    # Course not expanded, try to expand it individually
+                    if not expand_course_panel(driver, course):
+                        logger.warning(f"Could not expand course: {course_name}")
+                        continue
+                
+                # Scrape absence data from this course
+                absence_rows = course.find_elements(By.XPATH, ".//tr[td[contains(., 'Absence')]]")
+                logger.info(f"Found {len(absence_rows)} absence records in course: {course_name}")
+                
+                for row in absence_rows:
+                    cells = row.find_elements(By.TAG_NAME, "td")
+                    if len(cells) >= 4:
                         absences.append({
                             "course": course_name,
-                            "type": safe_get_text(cells[1]),  # e.g., 'lecture' or 'practical'
-                            "date": safe_get_text(cells[2]),  # e.g., 'Sat, 19/07/2025'
-                            "status": status_text,  # e.g., 'Absence'
+                            "type": safe_get_text(cells[1]),
+                            "date": safe_get_text(cells[2]),
+                            "status": safe_get_text(cells[3]),
                         })
-                        logger.debug(f"Added absence: {course_name} - {safe_get_text(cells[1])} on {safe_get_text(cells[2])}")
-                    
+                        
+            except StaleElementReferenceException:
+                logger.warning("Stale element encountered, skipping course.")
+                continue
+            except Exception as e:
+                logger.error(f"Error processing course {course_name}: {e}")
+                continue
+                
     except Exception as e:
-        logger.error(f"Error processing a course for absence: {e}", exc_info=True)
+        logger.error(f"Error scraping absence data: {e}", exc_info=True)
     
-    logger.info(f"Absence extraction completed. Found {len(absences)} absence records.")
     return {"absences": absences}
 
 def scrape_course_registration_data(driver):
@@ -1037,3 +1206,143 @@ def run_scrape_for_user(username: str, password: str, fcb_api_key: str, nopecha_
             driver = None
             
         logger.info(f"--- Scraper finished for user {username} ---")
+# --- Optimized Date Parsing & Alerting Functions ---
+
+def parse_date(date_str):
+    """Enhanced date parsing with multiple format support and relative date handling."""
+    if not date_str or any(s in date_str for s in ["N/A", "Unknown"]): 
+        return None
+        
+    date_str = date_str.replace('\n', ' ').strip()
+    
+    # Handle relative dates like "Will be closed after: 5 days 12 hours"
+    relative_match = re.search(r"Will be closed after:.*?(\d+)\s*days?.*?(\d+)\s*hours?", date_str, re.IGNORECASE)
+    if relative_match:
+        try:
+            return datetime.now() + timedelta(days=int(relative_match.group(1)), hours=int(relative_match.group(2)))
+        except (ValueError, IndexError): 
+            pass
+    
+    # Try multiple date formats
+    formats_to_try = [
+        "%b %d, %Y at %I:%M %p", 
+        "%B %d, %Y at %I:%M %p", 
+        "%d/%m/%Y %I:%M %p"
+    ]
+    
+    for fmt in formats_to_try:
+        try: 
+            return datetime.strptime(date_str, fmt)
+        except ValueError: 
+            continue
+            
+    logger.warning(f"Could not parse date: {date_str}")
+    return None
+
+def send_discord_alert(webhook_url, content=None, embeds=None):
+    """Send Discord webhook alert with error handling."""
+    if not webhook_url or "discord.com" not in webhook_url: 
+        return
+        
+    try:
+        response = requests.post(
+            webhook_url, 
+            json={"content": content, "embeds": embeds or []}, 
+            timeout=15
+        )
+        response.raise_for_status()
+        logger.info("Discord alert sent successfully.")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send Discord alert: {e}")
+
+def send_deadline_alerts(data, webhook_url, deadline_threshold_days=7):
+    """Send alerts for upcoming deadlines with optimized logic."""
+    upcoming = []
+    now = datetime.now()
+    
+    # Combine all tasks from different sources
+    all_tasks = (
+        data.get("assignments", {}).get("assignments", []) + 
+        data.get("quizzes", {}).get("quizzes_without_results", [])
+    )
+    
+    for task in all_tasks:
+        deadline = parse_date(task.get("closed_at"))
+        if deadline and deadline > now and (deadline - now).days <= deadline_threshold_days:
+            upcoming.append({
+                "course": task.get("course"), 
+                "name": task.get("name"), 
+                "due_date_obj": deadline, 
+                "type": task.get("type")
+            })
+    
+    if not upcoming: 
+        return
+        
+    # Sort by deadline
+    upcoming.sort(key=lambda x: x["due_date_obj"])
+    
+    # Create Discord embeds
+    embeds = [{
+        "title": f"🔔 {t['type']}: {t.get('name', 'Unnamed')}", 
+        "color": 15158332, 
+        "fields": [
+            {"name": "Course", "value": t.get('course', 'N/A'), "inline": True}, 
+            {"name": "Due Date", "value": t['due_date_obj'].strftime('%a, %b %d at %I:%M %p'), "inline": True}
+        ]
+    } for t in upcoming[:10]]
+    
+    send_discord_alert(webhook_url, content="**❗ Upcoming Deadlines Alert!**", embeds=embeds)
+
+def check_and_send_new_absence_alerts(old_absences, new_absences, webhook_url):
+    """Check for new absences and send alerts."""
+    if not new_absences: 
+        return 0
+        
+    old_set = {(a['course'], a['date'], a['type']) for a in old_absences}
+    newly_recorded = [a for a in new_absences if (a['course'], a['date'], a['type']) not in old_set]
+    
+    if not newly_recorded:
+        logger.info("No new absences detected.")
+        return 0
+        
+    logger.info(f"Found {len(newly_recorded)} new absence records.")
+    
+    embeds = [{
+        "title": f"⚠️ Absence: {a.get('course', 'N/A')}", 
+        "color": 16729420, 
+        "fields": [
+            {"name": "Type", "value": a.get('type', 'N/A'), "inline": True}, 
+            {"name": "Date", "value": a.get('date', 'N/A'), "inline": True}
+        ]
+    } for a in newly_recorded[:10]]
+    
+    send_discord_alert(webhook_url, content="**⚠️ New Absence(s) Recorded!**", embeds=embeds)
+    return len(newly_recorded)
+
+def check_and_send_new_course_alerts(old_data, new_data, webhook_url):
+    """Check for new courses and send alerts."""
+    if not new_data.get("available_courses"): 
+        return 0
+        
+    old_names = {c.get("name") for c in old_data.get("available_courses", [])}
+    newly_added = [c for c in new_data["available_courses"] if c.get("name") not in old_names]
+    
+    if not newly_added:
+        logger.info("No new courses detected.")
+        return 0
+        
+    logger.info(f"Found {len(newly_added)} new courses.")
+    
+    embeds = [{
+        "title": f"🚀 New Course: {c.get('name', 'N/A')}", 
+        "color": 3066993, 
+        "fields": [
+            {"name": "Hours", "value": c.get('hours', 'N/A'), "inline": True}, 
+            {"name": "Fees", "value": c.get('fees', 'N/A'), "inline": True}
+        ]
+    } for c in newly_added[:10]]
+    
+    end_date = f"Registration Ends: **{new_data.get('registration_end_date', 'N/A')}**"
+    send_discord_alert(webhook_url, content=f"**✅ New Courses for Registration!**\n{end_date}", embeds=embeds)
+    return len(newly_added)

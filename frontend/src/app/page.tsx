@@ -1,6 +1,7 @@
 import ActivityLog from "@/components/landing/ActivityLog";
 import StatsPanel from "@/components/landing/StatsPanel";
 import GlobeVisual from "@/components/landing/GlobeVisual";
+import DisclaimerCard from "@/components/landing/DisclaimerCard";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 
@@ -19,7 +20,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="text-center mb-8 relative z-10">
         <div className="flex items-center justify-center mb-4">
-          <div className="font-heading text-6xl md:text-8xl text-text-heading animate-flicker"
+          <div className="font-heading text-6xl md:text-8xl text-text-heading"
                style={{ textShadow: '0 0 20px rgba(255, 255, 255, 0.5)' }}>
             UNI SHARK
           </div>
@@ -29,10 +30,13 @@ export default function LandingPage() {
         </h2>
       </header>
 
+      {/* Disclaimer Card */}
+      <DisclaimerCard />
+
       {/* Priority CTA Section - Mobile First */}
       <div className="text-center mb-8 lg:hidden relative z-10">
         <div className="space-y-4">
-          <h1 className="font-heading text-xl text-accent-primary animate-flicker" 
+          <h1 className="font-heading text-xl text-accent-primary" 
               style={{ textShadow: '0 0 5px rgba(137, 221, 255, 0.6)' }}>
             &gt; UNLEASH THE SHARK
           </h1>
@@ -42,7 +46,7 @@ export default function LandingPage() {
           <Link href="/dashboard" className="inline-block">
             <Button 
               variant="primary" 
-              className="font-heading text-sm px-8 py-3 hover:shadow-glow-primary transition-all duration-200 animate-flicker"
+              className="font-heading text-sm px-8 py-3 hover:shadow-glow-primary transition-all duration-200"
             >
               &gt; ACCESS TERMINAL
             </Button>
@@ -118,7 +122,7 @@ export default function LandingPage() {
           
           {/* CTA Section - Desktop Only */}
           <div className="space-y-6 hidden lg:block">
-            <h1 className="font-heading text-2xl md:text-3xl text-accent-primary animate-flicker"
+            <h1 className="font-heading text-2xl md:text-3xl text-accent-primary"
                 style={{ textShadow: '0 0 5px rgba(137, 221, 255, 0.6)' }}>
               &gt; UNLEASH THE SHARK
             </h1>
@@ -129,7 +133,7 @@ export default function LandingPage() {
               <Link href="/dashboard" className="inline-block">
                 <Button 
                   variant="primary" 
-                  className="font-heading text-sm px-8 py-3 hover:shadow-glow-primary transition-all duration-200 animate-flicker"
+                  className="font-heading text-sm px-8 py-3 hover:shadow-glow-primary transition-all duration-200"
                 >
                   &gt; ACCESS TERMINAL
                 </Button>
@@ -154,10 +158,19 @@ export default function LandingPage() {
 
       {/* Footer Status Bar */}
       <footer className="mt-8 text-center relative z-10">
-        <div className="font-heading text-xs text-text-secondary">
+        <div className="font-heading text-xs text-text-secondary mb-2">
           UNI_SHARK_v4.2.1 | 
           <span className="text-state-success mx-2">CORE_ONLINE</span> | 
           SHARKS_DEPLOYED: <span className="text-accent-primary">1,337</span>
+        </div>
+        <div className="text-xs text-text-secondary font-mono">
+          <Link href="/terms" className="text-accent-primary hover:text-state-success transition-colors underline">
+            Terms of Use
+          </Link>
+          {' | '}
+          <a href="mailto:admin@unishark.site" className="text-accent-primary hover:text-state-success transition-colors underline">
+            Contact
+          </a>
         </div>
       </footer>
     </div>

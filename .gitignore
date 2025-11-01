@@ -2,20 +2,65 @@
 .env
 .venv
 venv/
+backend/.env
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+celerybeat-schedule
 
 # Node
 node_modules/
 .next/
 npm-debug.log
-.clinerules/byterover-rules.md
-.kilocode/rules/byterover-rules.md
-.roo/rules/byterover-rules.md
-.windsurf/rules/byterover-rules.md
-.cursor/rules/byterover-rules.mdc
-.kiro/steering/byterover-rules.md
-.qoder/rules/byterover-rules.md
-.augment/rules/byterover-rules.md
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Screenshots and debug files
+*.png
+*.jpg
+*.jpeg
+
+# Test files
+test_*.py
+test_*.bat
+*_test.py
+*_test.bat
+
+# Development scripts
+start_*.bat
+check_*.bat
+restart_*.bat
+
+# Documentation (keep only README.md)
+*.md
+!README.md
+
+# AI Rules
+.clinerules/
+.kilocode/
+.roo/
+.windsurf/
+.cursor/
+.kiro/steering/
+.qoder/
+.augment/

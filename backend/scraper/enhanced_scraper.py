@@ -10,7 +10,8 @@ from typing import Dict, Optional
 from scraper.scraper_logic import (
     initialize_driver, login, navigate_to_page, scrape_quizzes, 
     scrape_assignments, scrape_absence_data, scrape_course_registration_data,
-    QUIZZES_URL, ASSIGNMENTS_URL, ABSENCE_URL, COURSE_REG_URL
+    QUIZZES_URL, ASSIGNMENTS_URL, ABSENCE_URL, COURSE_REG_URL,
+    CaptchaApiKeysRequiredError
 )
 from selenium.webdriver.common.by import By
 from utils.error_tracker import ErrorTracker, ErrorType, detect_error_type
@@ -120,6 +121,31 @@ class EnhancedScraper:
             except Exception as e:
                 raise Exception(f"Session validation failed after login: {e}")
                 
+        except CaptchaApiKeysRequiredError as e:
+            # Special handling for CAPTCHA API keys required error
+            error_msg = str(e)
+            logger.error(f"CAPTCHA API keys required for user {self.user_id}: {error_msg}")
+            
+            # Immediately suspend user for this specific error
+            error_type = ErrorType.CAPTCHA_ERROR
+            should_suspend = self.error_tracker.log_error(
+                error_type, error_msg, {
+                    "username": username,
+                    "has_fcb_key": bool(fcb_api_key),
+                    "has_nopecha_key": bool(nopecha_api_key),
+                    "captcha_detected": True,
+                    "api_keys_missing": True
+                }
+            )
+            
+            # Send specific notification about CAPTCHA API keys
+            self._send_captcha_api_keys_notification()
+            
+            if should_suspend:
+                self._send_suspension_notification()
+            
+            raise Exception(f"CAPTCHA API keys required: {error_msg}")
+            
         except Exception as e:
             # Analyze the error and page source for specific error types
             error_msg = str(e)
@@ -292,11 +318,34 @@ class EnhancedScraper:
         except Exception as e:
             logger.error(f"Failed to send suspension notification for user {self.user_id}: {e}")
     
+    def _send_captcha_api_keys_notification(self):
+        """Send CAPTCHA API keys required notification to user"""
+        try:
+            message = (
+                "🔒 CAPTCHA Detected - API Keys Required\n\n"
+                "Your DULMS login now requires CAPTCHA verification, but no valid CAPTCHA solving API keys were found in your settings.\n\n"
+                "To continue automated scraping, please:\n"
+                "1. Go to Settings in your dashboard\n"
+                "2. Add your FreeCaptchaBypass or NopeCHA API key\n"
+                "3. Automated scraping will resume automatically\n\n"
+                "Your account has been temporarily suspended from automated scraping until API keys are added."
+            )
+            
+            self.notifier.send_custom_notification(
+                subject="CAPTCHA API Keys Required - Scraping Suspended",
+                message=message,
+                notification_type="captcha_api_required"
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to send CAPTCHA API keys notification for user {self.user_id}: {e}")
+    
     def _get_friendly_error_message(self, error_type: ErrorType, error_message: str) -> str:
         """Convert technical error to user-friendly message"""
         friendly_messages = {
             ErrorType.WRONG_CREDENTIALS: "Your DULMS username or password appears to be incorrect. Please check your credentials in settings.",
             ErrorType.WRONG_CAPTCHA: "CAPTCHA verification failed. This might be due to CAPTCHA service issues or poor image quality.",
+            ErrorType.CAPTCHA_ERROR: "CAPTCHA is required but no valid API keys were provided. Please add your CAPTCHA solving API keys in settings.",
             ErrorType.IP_BANNED: "Your IP address appears to be temporarily banned. Please try again later or contact support.",
             ErrorType.NO_CAPTCHA_CREDIT: "Your CAPTCHA service has run out of credits. Please top up your account or check your API keys.",
             ErrorType.CAPTCHA_SERVICE_ERROR: "CAPTCHA solving service is experiencing issues. Please check your API keys or try again later.",

@@ -18,6 +18,7 @@ class ErrorType(Enum):
     # Authentication Errors
     WRONG_CREDENTIALS = "wrong_credentials"
     WRONG_CAPTCHA = "wrong_captcha"
+    CAPTCHA_ERROR = "captcha_error"  # CAPTCHA present but no valid API keys
     CAPTCHA_SERVICE_ERROR = "captcha_service_error"
     IP_BANNED = "ip_banned"
     NO_CAPTCHA_CREDIT = "no_captcha_credit"
