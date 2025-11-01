@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { 
   AlertTriangle, 
@@ -127,7 +127,7 @@ const ScrapingStatusBanner: React.FC = () => {
             {status.status.toUpperCase()}
           </Badge>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => setDismissed(true)}
             className="h-6 w-6 p-0"
