@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y tzdata \
     && dpkg-reconfigure -f noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome and its dependencies
+# Install Google Chrome and its dependencies (optimized for Heroku)
 RUN apt-get update && apt-get install -y \
     ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 \
     libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 \
@@ -34,7 +34,8 @@ RUN apt-get update && apt-get install -y \
     && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
     && apt install ./google-chrome-stable_current_amd64.deb -y \
     && rm google-chrome-stable_current_amd64.deb \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install chromedriver using the new Chrome for Testing API
 RUN apt-get update && apt-get install -y \

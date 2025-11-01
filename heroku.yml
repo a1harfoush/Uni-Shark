@@ -1,0 +1,12 @@
+# heroku.yml
+build:
+  docker:
+    web: backend/Dockerfile  # Builds your FastAPI backend image
+    worker: backend/Dockerfile  # Same image for merged worker + scheduler
+
+setup:
+  addons: []  # No Heroku Redis; using external free Redis Cloud
+
+run:
+  web: uvicorn main:app --host 0.0.0.0 --port $PORT  # Starts API
+  worker: celery -A tasks worker -B --loglevel=info -Q manual,background -c 2  # Merged worker with embedded scheduler (-B flag)

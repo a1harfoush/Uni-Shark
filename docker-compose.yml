@@ -31,35 +31,14 @@ services:
     ports:
       - "8000:8000"
 
-  worker-manual:
+  worker:
     <<: *backend-base
-    command: celery -A tasks worker --loglevel=info -Q manual -c 2
-
-  worker-background:
-    <<: *backend-base
-    command: celery -A tasks worker --loglevel=info -Q background -c 3
+    command: celery -A tasks worker --loglevel=info -Q manual,background -c 4
 
   scheduler:
     <<: *backend-base
     # Revert to the standard celery beat command.
     command: celery -A tasks beat --loglevel=info
-
-  telegram-bot:
-    <<: *backend-base
-    command: python start_telegram_bot.py
-    restart: unless-stopped
-    environment:
-      - TZ=Africa/Cairo
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-    depends_on:
-      - redis
-      - api
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe', timeout=10)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 volumes:
   redis_data:

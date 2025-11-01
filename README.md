@@ -10,7 +10,6 @@ A comprehensive web application that monitors university course information, ass
 - **Queue**: Redis
 - **Authentication**: Clerk
 - **Notifications**: Email (Brevo) + Telegram Bot
-- **Telegram Bot**: Standalone service for instant notifications
 
 ## 🚀 Deployment
 
@@ -36,11 +35,8 @@ npm start
 ### Using Docker Compose (Full Stack)
 
 ```bash
-# Start all services including Telegram bot
+# Start all services
 docker-compose up -d
-
-# Or use the enhanced startup script (Windows)
-start_all_services_with_telegram.bat
 ```
 
 ## 📋 Environment Variables
@@ -127,8 +123,7 @@ DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
 │   ├── utils/              # Utility functions
 │   ├── main.py             # FastAPI app entry point
 │   ├── tasks.py            # Celery tasks
-│   ├── telegram_bot.py     # Telegram bot service
-│   ├── start_telegram_bot.py # Enhanced bot startup script
+│   ├── telegram_bot.py     # Telegram bot service (run separately)
 │   └── requirements.txt    # Python dependencies
 ├── frontend/               # Next.js frontend
 │   ├── src/
@@ -172,12 +167,9 @@ The Telegram bot provides instant notifications for assignments, quizzes, and de
    TELEGRAM_BOT_TOKEN=your_bot_token_here
    ```
 
-3. **Start the Bot**:
+3. **Start the Bot** (Optional - Run Separately):
    ```bash
-   # With Docker Compose (recommended)
-   docker-compose up -d telegram-bot
-   
-   # Or standalone
+   # Run standalone (outside Docker)
    cd backend
    python telegram_bot.py
    ```
@@ -199,7 +191,6 @@ The Telegram bot provides instant notifications for assignments, quizzes, and de
 - Backend health check: `GET /api/health`
 - Task status: `GET /api/scrape/task-status/{task_id}`
 - Scheduler status: `GET /api/scheduler-status`
-- Telegram bot status: `docker-compose logs telegram-bot`
 
 ## 🔒 Security
 
