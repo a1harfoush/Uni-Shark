@@ -551,14 +551,33 @@ def login(driver, username, password, fcb_api_key, nopecha_api_key):
             # Wait for the login form to be present with extended timeout
             username_field = wait_for_element(driver, By.ID, "txtname", timeout=45)
             if not username_field:
-                raise Exception("Login page did not load correctly.")
+                # Debug: Log current page info
+                current_url = driver.current_url
+                page_title = driver.title
+                logging.error(f"Login page failed to load. URL: {current_url}, Title: {page_title}")
+                
+                # Check if we're on a different page
+                if "delta" in page_title.lower() or "portal" in page_title.lower():
+                    logging.error("Detected DELTA-PORTAL page instead of login page")
+                
+                raise Exception(f"Login page did not load correctly. Current page: {page_title}")
+            
+            logging.info("✅ Username field found successfully")
             
             # Re-find elements to avoid stale references
             password_field = wait_for_element(driver, By.ID, "txtPass", timeout=10)
-            captcha_input = wait_for_element(driver, By.ID, "txt_captcha", timeout=10)
             
-            if not password_field or not captcha_input:
-                raise Exception("Login form elements not found.")
+            if not password_field:
+                logging.error("❌ Password field not found")
+                # Log available form elements for debugging
+                try:
+                    form_inputs = driver.find_elements(By.TAG_NAME, "input")
+                    logging.info(f"Available input elements: {[inp.get_attribute('id') for inp in form_inputs if inp.get_attribute('id')]}")
+                except:
+                    pass
+                raise Exception("Password field not found")
+            
+            logging.info("✅ Password field found successfully")
 
             # Clear and fill fields with error handling
             try:
@@ -579,17 +598,53 @@ def login(driver, username, password, fcb_api_key, nopecha_api_key):
                 raise Exception("CAPTCHA handling failed - check API keys and try again")
             logging.info("CAPTCHA handling completed successfully")
             
-            # Submit form with multiple strategies
+            logging.info("Submitting login form...")
+            
+            # Submit form with multiple strategies (improved order)
+            form_submitted = False
+            
+            # Strategy 1: Click the specific submit button
             try:
-                password_field.send_keys(Keys.ENTER)
-            except Exception as submit_error:
-                logging.warning(f"Enter key submission failed: {submit_error}. Trying form submission.")
+                submit_button = wait_for_element(driver, By.ID, "Button1", timeout=5)
+                if submit_button:
+                    click_element_robustly(driver, submit_button)
+                    logging.info("✅ Form submitted via Button1 click")
+                    form_submitted = True
+                else:
+                    raise Exception("Button1 not found")
+            except Exception as button_error:
+                logging.warning(f"Button1 click failed: {button_error}")
+            
+            # Strategy 2: Generic submit button
+            if not form_submitted:
                 try:
                     submit_button = driver.find_element(By.CSS_SELECTOR, "input[type='submit'], button[type='submit']")
-                    submit_button.click()
+                    click_element_robustly(driver, submit_button)
+                    logging.info("✅ Form submitted via generic submit button")
+                    form_submitted = True
                 except Exception as button_error:
-                    logging.warning(f"Button click failed: {button_error}. Trying JavaScript submission.")
+                    logging.warning(f"Generic submit button failed: {button_error}")
+            
+            # Strategy 3: Enter key on password field
+            if not form_submitted:
+                try:
+                    password_field.send_keys(Keys.ENTER)
+                    logging.info("✅ Form submitted via Enter key")
+                    form_submitted = True
+                except Exception as enter_error:
+                    logging.warning(f"Enter key submission failed: {enter_error}")
+            
+            # Strategy 4: JavaScript form submission
+            if not form_submitted:
+                try:
                     driver.execute_script("document.forms[0].submit();")
+                    logging.info("✅ Form submitted via JavaScript")
+                    form_submitted = True
+                except Exception as js_error:
+                    logging.warning(f"JavaScript submission failed: {js_error}")
+            
+            if not form_submitted:
+                raise Exception("All form submission strategies failed")
 
             # Enhanced login verification with multiple checks
             login_successful = False
@@ -628,11 +683,25 @@ def login(driver, username, password, fcb_api_key, nopecha_api_key):
                 # Check if we're still on login page or got an error
                 current_url = driver.current_url
                 if "Login.aspx" in current_url:
+                    # Check for error messages in the error div
+                    try:
+                        error_div = driver.find_element(By.CSS_SELECTOR, ".error")
+                        error_text = error_div.text.strip()
+                        if error_text:
+                            logging.error(f"Login error detected: {error_text}")
+                            raise Exception(f"Login error: {error_text}")
+                    except:
+                        pass
+                    
+                    # Check page source for error indicators
                     page_source = driver.page_source.lower()
                     if "invalid" in page_source or "incorrect" in page_source or "wrong" in page_source:
                         raise Exception("Invalid credentials detected")
+                    elif "captcha" in page_source and "wrong" in page_source:
+                        raise Exception("Wrong CAPTCHA detected")
                     else:
-                        raise Exception("Login form submission timeout")
+                        logging.error(f"Login timeout - still on login page. URL: {current_url}")
+                        raise Exception("Login form submission timeout - page did not redirect")
                 else:
                     raise Exception(f"Unexpected page after login: {current_url}")
 

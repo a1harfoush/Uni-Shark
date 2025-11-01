@@ -37,7 +37,7 @@ class NotificationDeduplicator:
             notification_id = f"{self.user_id}:{notification_type}:{content_hash}"
             
             # Check if we've sent this notification recently
-            cutoff_time = time.time() - (self.dedup_window_minutes * 60)
+            cutoff_time = int(time.time()) - (self.dedup_window_minutes * 60)
             
             response = self.db.table('notification_dedup').select('sent_at').eq(
                 'notification_id', notification_id
@@ -53,7 +53,7 @@ class NotificationDeduplicator:
                 'user_id': self.user_id,
                 'notification_type': notification_type,
                 'content_hash': content_hash,
-                'sent_at': time.time()
+                'sent_at': int(time.time())
             }).execute()
             
             return True
@@ -82,7 +82,7 @@ class NotificationDeduplicator:
         """
         try:
             db = get_supabase_client()
-            cutoff_time = time.time() - (days_to_keep * 24 * 60 * 60)
+            cutoff_time = int(time.time()) - (days_to_keep * 24 * 60 * 60)
             
             db.table('notification_dedup').delete().lt('sent_at', cutoff_time).execute()
             logger.info(f"Cleaned up notification dedup records older than {days_to_keep} days")
