@@ -72,7 +72,7 @@ def initialize_driver(headless=True):
     options.add_argument("--disable-features=TranslateUI")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-plugins")
-    options.add_argument("--disable-images")  # Disable image loading to save memory
+    # options.add_argument("--disable-images")  # Disable image loading to save memory
     
     # Set page load strategy for better performance
     options.page_load_strategy = 'normal'
