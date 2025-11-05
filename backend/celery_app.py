@@ -52,6 +52,11 @@ celery_app.conf.update(
     # Task execution settings
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    # Memory optimization settings
+    worker_max_tasks_per_child=50,  # Restart worker after 50 tasks to prevent memory leaks
+    worker_max_memory_per_child=int(os.getenv("WORKER_MAX_MEMORY_MB", "200")) * 1000,  # Convert MB to KB
+    task_soft_time_limit=300,  # 5 minutes soft limit
+    task_time_limit=600,  # 10 minutes hard limit
     # Beat scheduler settings
     beat_scheduler="celery.beat:PersistentScheduler",
     beat_schedule_filename="celerybeat-schedule",

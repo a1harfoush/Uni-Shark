@@ -9,4 +9,4 @@ setup:
 
 run:
   web: uvicorn main:app --host 0.0.0.0 --port $PORT  # Starts API
-  worker: celery -A tasks worker -B --loglevel=info -Q manual,background -c 2  # Merged worker with embedded scheduler (-B flag)
+  worker: celery -A tasks worker -B --loglevel=info -Q manual,background -c 1  # Merged worker with embedded scheduler (-B flag)
