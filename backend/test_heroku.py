@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from db.supabase_client import get_supabase_client
 from utils.enhanced_notifications import UniSharkNotificationService, NotificationData, send_test_notification
-from utils.scraper import DULMSScraper
+from scraper.enhanced_scraper import EnhancedScraper
 from utils.date_processor import parse_deadline_date
 
 # Configure logging

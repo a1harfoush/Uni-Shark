@@ -17,7 +17,7 @@
 
 ## 🌟 What is UniShark?
 
-UniShark is an intelligent academic monitoring system that automatically tracks your university assignments, deadlines, absences, and course registrations. Built specifically for DULMS (Damascus University Learning Management System), it provides real-time notifications across multiple platforms to ensure you never miss important academic updates.
+UniShark is an intelligent academic monitoring system that automatically tracks your university assignments, deadlines, absences, and course registrations. Built specifically for Example university learning system, it provides real-time notifications across multiple platforms to ensure you never miss important academic updates.
 
 ### 🎯 Key Features
 
@@ -73,7 +73,7 @@ graph TB
     C --> E[🔴 Redis Queue]
     E --> F[⚙️ Celery Workers]
     F --> G[🕷️ Web Scraper]
-    G --> H[🎓 DULMS Portal]
+    G --> H[🎓 University Portal]
     F --> I[🔔 Notification Service]
     I --> J[💬 Discord]
     I --> K[📱 Telegram]
@@ -141,17 +141,17 @@ This software is proprietary and confidential. Unauthorized copying, distributio
 ### Educational Use Only
 This project is intended for educational purposes only. Users are responsible for complying with their university's terms of service and applicable laws.
 
-For inquiries or concerns, contact: [admin@unishark.site]
+For inquiries or concerns, contact: admin@unishark.site
 
 ---
 
 ## 📈 Roadmap
 
 ### Upcoming Features
-- 🔄 **Multi-University Support**: Expand beyond DULMS
-- 📱 **Mobile App**: Native iOS and Android applications
+- 🔄 **Multi-University Support**: Expand beyond 
+- 📝 **Customizable Notifications**: Personalized alerts
+- 📊 **Detailed Analytics**: Track academic performance and Attendance Patterns
 - 🤖 **AI Assistant**: Smart recommendations and study planning
-- 📊 **Advanced Analytics**: Predictive insights and performance trends
 - 🔗 **Calendar Integration**: Sync with Google Calendar, Outlook
 - 👥 **Study Groups**: Collaborative features for students
 
@@ -168,5 +168,5 @@ For inquiries or concerns, contact: [admin@unishark.site]
 
 🦈 **UniShark** - Swimming through academia, one deadline at a time!
 
-[⭐ Star this repo](https://github.com/yourusername/unishark)
+[⭐ Star this repo](https://github.com/a1harfoush/Uni-Shark)
 </div>
