@@ -164,7 +164,6 @@ export default function RootLayout({
       }}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/dashboard"
       fallbackRedirectUrl="/dashboard"
     >
       <html lang="en">

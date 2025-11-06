@@ -63,7 +63,7 @@ export default function Page() {
             },
           },
         }}
-        redirectUrl="/dashboard"
+        fallbackRedirectUrl="/dashboard"
         signInUrl="/sign-in"
       />
     </div>

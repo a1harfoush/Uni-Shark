@@ -49,9 +49,11 @@ def get_dashboard_data(
     if not user_response.data:
         # Auto-create the user if they don't exist
         try:
+            # Use a placeholder email if we don't have the real one
+            placeholder_email = f"{clerk_user_id}@placeholder.unishark.site"
             upsert_result = db.table('users').insert({
                 'clerk_user_id': clerk_user_id,
-                'created_at': 'now()'
+                'email': placeholder_email
             }).execute()
             user_id = upsert_result.data[0]['id']
         except Exception as e:
