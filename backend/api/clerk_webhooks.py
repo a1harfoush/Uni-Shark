@@ -14,12 +14,17 @@ router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@router.get("/clerk-webhook/test")
+@router.get("/clerk/webhook/test")
 async def test_webhook():
     """Test endpoint to verify webhook is accessible"""
     return {"status": "webhook endpoint is accessible", "timestamp": "2024-01-01"}
 
-@router.post("/clerk-webhook")
+@router.post("/clerk/webhook/test")
+async def test_webhook_post():
+    """Test POST endpoint for webhook testing"""
+    return {"status": "webhook POST endpoint is accessible", "timestamp": "2024-01-01"}
+
+@router.post("/clerk/webhook")
 async def clerk_webhook(request: Request):
     try:
         headers = request.headers
