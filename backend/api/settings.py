@@ -12,7 +12,7 @@ from typing import Optional
 router = APIRouter()
 
 # --- Clerk JWT Verification ---
-CLERK_JWKS_URL = "https://curious-boxer-5.clerk.accounts.dev/.well-known/jwks.json"
+CLERK_JWKS_URL = "https://clerk.unishark.site/.well-known/jwks.json"
 # Cache for the JWKS
 jwks = None
 
@@ -47,7 +47,7 @@ async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> s
             key,
             algorithms=[header["alg"]],
             # The issuer is your Clerk Frontend API URL
-            issuer="https://curious-boxer-5.clerk.accounts.dev",
+            issuer="https://clerk.unishark.site",
         )
         return claims["sub"]  # "sub" claim is the user_id
     except (JOSEError, IndexError, KeyError) as e:

@@ -12,7 +12,7 @@ import logging
 router = APIRouter()
 
 # --- Clerk JWT Verification (reused from settings.py) ---
-CLERK_JWKS_URL = "https://curious-boxer-5.clerk.accounts.dev/.well-known/jwks.json"
+CLERK_JWKS_URL = "https://clerk.unishark.site/.well-known/jwks.json"
 jwks = None
 
 async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> str:
@@ -45,7 +45,7 @@ async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> s
             token,
             key,
             algorithms=[header["alg"]],
-            issuer="https://curious-boxer-5.clerk.accounts.dev",
+            issuer="https://clerk.unishark.site",
         )
         return claims["sub"]
     except (JOSEError, IndexError, KeyError) as e:
