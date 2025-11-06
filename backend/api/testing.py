@@ -20,8 +20,17 @@ async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> s
     if authorization is None:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
+    # Check if authorization header has the correct format
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    
     try:
-        token = authorization.split(" ")[1]
+        parts = authorization.split(" ")
+        if len(parts) != 2:
+            raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+        token = parts[1]
+        if not token:
+            raise HTTPException(status_code=401, detail="Token is empty")
     except IndexError:
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
 

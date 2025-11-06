@@ -7,9 +7,9 @@ interface TestimonialButtonProps {
   variant?: "primary" | "secondary" | "minimal";
 }
 
-const TestimonialButton: React.FC<TestimonialButtonProps> = ({ 
-  className = "", 
-  variant = "primary" 
+const TestimonialButton: React.FC<TestimonialButtonProps> = ({
+  className = "",
+  variant = "primary"
 }) => {
   const getVariantStyles = () => {
     switch (variant) {
@@ -69,10 +69,10 @@ const TestimonialButton: React.FC<TestimonialButtonProps> = ({
       <div className="absolute top-0 right-0 w-2 h-2 border-r border-t border-accent-primary opacity-50 group-hover:opacity-100 transition-opacity"></div>
       <div className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-accent-primary opacity-50 group-hover:opacity-100 transition-opacity"></div>
       <div className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-accent-primary opacity-50 group-hover:opacity-100 transition-opacity"></div>
-      
+
       {/* Glow effect */}
       <div className="absolute inset-0 bg-accent-primary opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-      
+
       {/* Button content */}
       <span className="relative z-10 flex items-center gap-2">
         <span className="text-lg">🦈</span>

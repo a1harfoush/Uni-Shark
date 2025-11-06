@@ -31,6 +31,10 @@ python-telegram-bot
 # Utility
 psycopg2-binary
 pytz # For timezone handling
-
 psutil  # For system resource monitoring
 urllib3  # For enhanced HTTP handling
+beautifulsoup4  # For HTML parsing
+lxml  # XML/HTML parser
+python-dateutil  # Enhanced date parsing
+aiofiles  # Async file operations
+httpx  # Modern HTTP client
