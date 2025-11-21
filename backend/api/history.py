@@ -30,10 +30,10 @@ def get_scrape_history(
     db: Client = Depends(get_supabase_client)
 ):
     # 1. Get internal user ID
-    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).single().execute()
+    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).execute()
     if not user_response.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user_id = user_response.data['id']
+        raise HTTPException(status_code=404, detail="User profile not found. Please complete onboarding first.")
+    user_id = user_response.data[0]['id']
 
     # 2. Fetch history for that user, ordered by most recent
     history_response = db.table('scrape_history').select('id, scraped_at, status, new_items_found, log_message').eq('user_id', user_id).order('scraped_at', desc=True).execute()
@@ -45,10 +45,10 @@ def get_overall_stats(
     clerk_user_id: str = Depends(get_current_clerk_id),
     db: Client = Depends(get_supabase_client)
 ):
-    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).single().execute()
+    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).execute()
     if not user_response.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user_id = user_response.data['id']
+        raise HTTPException(status_code=404, detail="User profile not found. Please complete onboarding first.")
+    user_id = user_response.data[0]['id']
 
     # Fetch all scraped_data from the user's history
     all_history_response = db.table('scrape_history').select('scraped_data').eq('user_id', user_id).eq('status', 'success').execute()
@@ -92,10 +92,10 @@ def get_all_data(
     clerk_user_id: str = Depends(get_current_clerk_id),
     db: Client = Depends(get_supabase_client)
 ):
-    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).single().execute()
+    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).execute()
     if not user_response.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user_id = user_response.data['id']
+        raise HTTPException(status_code=404, detail="User profile not found. Please complete onboarding first.")
+    user_id = user_response.data[0]['id']
 
     all_history_response = db.table('scrape_history').select('scraped_data').eq('user_id', user_id).eq('status', 'success').execute()
 
@@ -140,19 +140,21 @@ def get_scrape_history_detail(
     db: Client = Depends(get_supabase_client)
 ):
     # 1. Get internal user ID to ensure user owns this scrape record
-    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).single().execute()
+    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).execute()
     if not user_response.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user_id = user_response.data['id']
+        raise HTTPException(status_code=404, detail="User profile not found. Please complete onboarding first.")
+    user_id = user_response.data[0]['id']
 
     # 2. Fetch the specific history entry
-    detail_response = db.table('scrape_history').select('scraped_data, user_id').eq('id', scrape_id).single().execute()
+    detail_response = db.table('scrape_history').select('scraped_data, user_id').eq('id', scrape_id).execute()
 
     if not detail_response.data:
         raise HTTPException(status_code=404, detail="History record not found")
+    
+    detail_data = detail_response.data[0]
 
     # 3. Security check: Make sure the fetched record belongs to the authenticated user
-    if detail_response.data['user_id'] != user_id:
+    if detail_data['user_id'] != user_id:
         raise HTTPException(status_code=403, detail="Not authorized to view this record")
 
-    return detail_response.data
+    return detail_data

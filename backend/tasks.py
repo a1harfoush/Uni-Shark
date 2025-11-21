@@ -12,7 +12,9 @@ from supabase import Client
 
 import logging
 import traceback
+import gc
 from utils.logging_config import configure_cairo_logging
+from utils.memory_monitor import log_memory_usage
 
 def send_first_scan_notification(scraped_data: dict, user_prefs: dict, user_id: str) -> int:
     """
@@ -135,6 +137,7 @@ def execute_scrape_task(self, user_id: str, queue_type: str = 'manual'):
     - Returns a structured dictionary.
     """
     logging.info(f"Executing scrape task for user_id: {user_id}")
+    log_memory_usage("task start")
     db = get_supabase_client()
     
     def update_state(state, meta):
@@ -221,6 +224,11 @@ def execute_scrape_task(self, user_id: str, queue_type: str = 'manual'):
         update_state('PROGRESS', {'status': 'Mission accomplished', 'percentage': 100})
 
         logging.info(f"Scrape completed successfully for user {user_id}.")
+        
+        # Force garbage collection to free memory
+        gc.collect()
+        log_memory_usage("task end")
+        
         return {'status': 'SUCCESS', 'new_items': new_items_count, 'user_id': user_id}
 
     except Exception as e:

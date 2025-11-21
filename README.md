@@ -1,204 +1,172 @@
-# DULMS Watcher - University Course Monitoring System
+# 🦈 UniShark - Your Ultimate Academic Assistant
 
-A comprehensive web application that monitors university course information, assignments, and deadlines with automated notifications.
+<div align="center">
 
-## 🏗️ Architecture
+![UniShark Logo](logo/_Image%2022.png)
 
-- **Backend**: FastAPI with Celery for background tasks
-- **Frontend**: Next.js with TypeScript and Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
-- **Queue**: Redis
-- **Authentication**: Clerk
-- **Notifications**: Email (Brevo) + Telegram Bot
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
+[![Next.js](https://img.shields.io/badge/Next.js-14+-black.svg)](https://nextjs.org)
+[![Heroku](https://img.shields.io/badge/Deployed%20on-Heroku-purple.svg)](https://heroku.com)
 
-## 🚀 Deployment
+**🎓 Never miss a deadline again! UniShark automatically monitors your university portal and keeps you informed.**
+</div>
 
-This application is designed for separate deployment of backend and frontend services.
+---
 
-### Backend Service
+## 🌟 What is UniShark?
 
-```bash
-cd backend
-docker build -t dulms-backend .
-docker run -p 8000:8000 --env-file ../.env dulms-backend
+UniShark is an intelligent academic monitoring system that automatically tracks your university assignments, deadlines, absences, and course registrations. Built specifically for Example university learning system, it provides real-time notifications across multiple platforms to ensure you never miss important academic updates.
+
+### 🎯 Key Features
+
+<details>
+<summary>🤖 <strong>Automated Monitoring</strong></summary>
+
+- **Smart Scraping**: Automatically logs into your university portal
+- **Real-time Updates**: Monitors changes every few hours (customizable)
+- **Intelligent Detection**: Identifies new assignments, deadlines, and absences
+- **Background Processing**: Runs silently using Celery task queues
+
+</details>
+
+<details>
+<summary>🔔 <strong>Multi-Platform Notifications</strong></summary>
+
+- **Discord Webhooks**: Rich embedded notifications with assignment details
+- **Telegram Bot**: Instant messages with markdown formatting
+- **Email Alerts**: Professional HTML emails via Brevo
+- **Customizable Timing**: Set how many hours before deadlines to notify
+
+</details>
+
+<details>
+<summary>🛡️ <strong>Advanced Security</strong></summary>
+
+- **CAPTCHA Bypass**: Integrates with NopeCHA and FreeCaptchaBypass APIs
+- **Secure Authentication**: Uses Clerk for user management
+- **Encrypted Storage**: User credentials stored securely in Supabase
+- **Rate Limiting**: Prevents detection
+
+</details>
+
+<details>
+<summary>📊 <strong>Comprehensive Dashboard</strong></summary>
+
+- **Assignment Tracking**: View all assignments with status and deadlines
+- **Absence Monitoring**: Track attendance records
+- **Course Registration**: Monitor available courses and registration periods
+- **Statistics**: Detailed analytics of your academic performance
+
+</details>
+
+---
+
+## 🏗️ Architecture Overview
+
+```mermaid
+graph TB
+    A[🌐 Next.js Frontend] --> B[🔐 Clerk Authentication]
+    A --> C[⚡ FastAPI Backend]
+    C --> D[🗄️ Supabase Database]
+    C --> E[🔴 Redis Queue]
+    E --> F[⚙️ Celery Workers]
+    F --> G[🕷️ Web Scraper]
+    G --> H[🎓 University Portal]
+    F --> I[🔔 Notification Service]
+    I --> J[💬 Discord]
+    I --> K[📱 Telegram]
+    I --> L[📧 Email]
+    G --> M[🤖 CAPTCHA Bypass]
+    M --> N[🔓 NopeCHA API]
+    M --> O[🔓 FreeCaptchaBypass API]
 ```
 
-### Frontend Service
+### 🛠️ Tech Stack
 
-```bash
-cd frontend
-npm install
-npm run build
-npm start
-```
+#### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Clerk** - Authentication and user management
+- **React Query** - Server state management
 
-### Using Docker Compose (Full Stack)
+#### Backend
+- **FastAPI** - High-performance Python API framework
+- **Celery** - Distributed task queue
+- **Redis** - Message broker and caching
+- **Supabase** - PostgreSQL database with real-time features
+- **Selenium** - Browser automation
 
-```bash
-# Start all services
-docker-compose up -d
-```
+#### Infrastructure
+- **Heroku** - Cloud platform deployment
+- **Docker** - Containerization
 
-## 📋 Environment Variables
+---
 
-Copy `.env.example` to `.env` and configure:
+## 📊 Usage Analytics
 
-```env
-# Database
-DATABASE_URL=your_postgresql_url
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_KEY=your_supabase_service_key
+UniShark provides detailed analytics:
 
-# Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_WEBHOOK_SIGNING_SECRET=your_clerk_webhook_secret
+- **Assignment Completion Rate**: Track your productivity
+- **Deadline Adherence**: Monitor how often you meet deadlines
+- **Attendance Patterns**: Analyze your class attendance
+- **Course Performance**: Compare performance across subjects
 
-# Redis & Celery
-CELERY_BROKER_URL=redis://redis:6379/0
-CELERY_RESULT_BACKEND=redis://redis:6379/0
+---
 
-# Email Notifications
-BREVO_API_KEY=your_brevo_api_key
-BREVO_SENDER_NAME=your_sender_name
-BREVO_SENDER_EMAIL=your_sender_email
+## 🛡️ Privacy & Security
 
-# Telegram Bot
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+### Data Protection
+- All user credentials are encrypted before storage
+- No passwords are stored in plain text
+- Regular security audits and updates
+- GDPR compliant data handling
 
-# Security
-SECRET_KEY=your_secret_key
+### University Portal Safety
+- Respectful scraping with delays
+- User-agent rotation to avoid detection
+- Rate limiting to prevent overload
+- Graceful error handling
 
-# Discord (Optional)
-DISCORD_FEEDBACK_WEBHOOK_URL=your_discord_webhook_url
-```
+---
 
-## 🔧 Local Development
+## 📄 License
 
-### Prerequisites
+**Proprietary License - All Rights Reserved**
 
-- Python 3.11+
-- Node.js 18+
-- Redis
-- Docker (optional)
+This software is proprietary and confidential. Unauthorized copying, distribution, or modification is strictly prohibited.
 
-### Quick Start
+### Educational Use Only
+This project is intended for educational purposes only. Users are responsible for complying with their university's terms of service and applicable laws.
 
-1. **Start Redis**:
-   ```bash
-   docker run -d -p 6379:6379 redis:7-alpine
-   ```
+For inquiries or concerns, contact: admin@unishark.site
 
-2. **Backend**:
-   ```bash
-   cd backend
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   pip install -r requirements.txt
-   python -m uvicorn main:app --reload
-   ```
+---
 
-3. **Celery Worker**:
-   ```bash
-   cd backend
-   celery -A tasks worker --loglevel=info
-   ```
+## 📈 Roadmap
 
-4. **Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+### Upcoming Features
+- 🔄 **Multi-University Support**: Expand beyond 
+- 📝 **Customizable Notifications**: Personalized alerts
+- 📊 **Detailed Analytics**: Track academic performance and Attendance Patterns
+- 🤖 **AI Assistant**: Smart recommendations and study planning
+- 🔗 **Calendar Integration**: Sync with Google Calendar, Outlook
+- 👥 **Study Groups**: Collaborative features for students
 
-## 📁 Project Structure
+### Version History
+- **v2.0.0** (Current) - Multi-platform notifications, enhanced UI
+- **v1.5.0** - CAPTCHA bypass integration
+- **v1.0.0** - Initial release with basic scraping and notifications
 
-```
-├── backend/                 # FastAPI backend
-│   ├── api/                # API routes
-│   ├── core/               # Core business logic
-│   ├── db/                 # Database configuration
-│   ├── scraper/            # Web scraping modules
-│   ├── utils/              # Utility functions
-│   ├── main.py             # FastAPI app entry point
-│   ├── tasks.py            # Celery tasks
-│   ├── telegram_bot.py     # Telegram bot service (run separately)
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── pages/          # Next.js pages
-│   │   └── lib/            # Utility libraries
-│   └── package.json        # Node.js dependencies
-├── docker-compose.yml      # Multi-service deployment
-└── README.md              # This file
-```
+---
 
-## 🔍 Key Features
+<div align="center">
 
-- **Automated Course Monitoring**: Scrapes university portal for updates
-- **Smart Notifications**: Email and Telegram alerts for deadlines
-- **User Dashboard**: Real-time course information and settings
-- **Background Processing**: Celery-based task queue for scraping
-- **Responsive Design**: Mobile-friendly interface
-- **Secure Authentication**: Clerk-based user management
+**Made with ❤️ for students, by students**
 
-## 🛠️ Development Commands
+🦈 **UniShark** - Swimming through academia, one deadline at a time!
 
-- `docker-compose up -d` - Start all services
-- `docker-compose logs -f [service]` - View service logs
-- `celery -A tasks worker --loglevel=info` - Start Celery worker
-- `celery -A tasks beat --loglevel=info` - Start Celery scheduler
-
-## 🤖 Telegram Bot Setup
-
-The Telegram bot provides instant notifications for assignments, quizzes, and deadlines.
-
-### Bot Configuration
-
-1. **Create a Telegram Bot**:
-   - Message [@BotFather](https://t.me/botfather) on Telegram
-   - Use `/newbot` command and follow instructions
-   - Copy the bot token to your `.env` file
-
-2. **Add Bot Token to Environment**:
-   ```env
-   TELEGRAM_BOT_TOKEN=your_bot_token_here
-   ```
-
-3. **Start the Bot** (Optional - Run Separately):
-   ```bash
-   # Run standalone (outside Docker)
-   cd backend
-   python telegram_bot.py
-   ```
-
-4. **Connect Users**:
-   - Users start the bot with `/start`
-   - Bot provides their unique Chat ID
-   - Users add Chat ID to their UniShark settings
-
-### Bot Features
-
-- **Welcome Message**: Provides user's unique Chat ID
-- **Instant Notifications**: Assignment and quiz alerts
-- **Deadline Reminders**: Automated deadline notifications
-- **Error Handling**: Robust restart and retry logic
-
-## 📊 Monitoring
-
-- Backend health check: `GET /api/health`
-- Task status: `GET /api/scrape/task-status/{task_id}`
-- Scheduler status: `GET /api/scheduler-status`
-
-## 🔒 Security
-
-- Environment variables for sensitive data
-- JWT-based authentication via Clerk
-- Input validation and sanitization
-- Rate limiting on API endpoints
-
-## 📝 License
-
-This project is private and proprietary.
+[⭐ Star this repo](https://github.com/a1harfoush/Uni-Shark)
+</div>

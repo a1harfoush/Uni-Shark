@@ -14,12 +14,17 @@ router = APIRouter()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@router.get("/clerk-webhook/test")
+@router.get("/clerk/webhook/test")
 async def test_webhook():
     """Test endpoint to verify webhook is accessible"""
     return {"status": "webhook endpoint is accessible", "timestamp": "2024-01-01"}
 
-@router.post("/clerk-webhook")
+@router.post("/clerk/webhook/test")
+async def test_webhook_post():
+    """Test POST endpoint for webhook testing"""
+    return {"status": "webhook POST endpoint is accessible", "timestamp": "2024-01-01"}
+
+@router.post("/clerk/webhook")
 async def clerk_webhook(request: Request):
     try:
         headers = request.headers
@@ -53,12 +58,13 @@ async def clerk_webhook(request: Request):
                 
                 if not email_addresses:
                     logger.error("No email addresses found in user data")
-                    raise HTTPException(status_code=400, detail="No email addresses found")
+                    # Use placeholder email if none provided
+                    email = f"{clerk_user_id}@placeholder.unishark.site"
+                else:
+                    email = email_addresses[0].get("email_address")
                 
-                email = email_addresses[0].get("email_address")
                 logger.info(f"Creating user with Clerk ID: {clerk_user_id}, Email: {email}")
 
-                new_user = User(clerk_user_id=clerk_user_id, email=email)
                 db = get_supabase_client()
                 
                 # Check if user already exists
@@ -68,12 +74,51 @@ async def clerk_webhook(request: Request):
                     return {"status": "success", "message": "User already exists"}
                 
                 # Insert new user
-                result = db.table('users').insert(new_user.dict()).execute()
+                new_user_data = {
+                    'clerk_user_id': clerk_user_id,
+                    'email': email
+                }
+                result = db.table('users').insert(new_user_data).execute()
                 logger.info(f"User {email} successfully created in database: {result.data}")
                 
             except Exception as e:
                 logger.error(f"Error creating user in database: {e}")
                 raise HTTPException(status_code=500, detail=f"Database error: {e}")
+        elif event_type == "email.created":
+            # Handle email verification events - we can extract user info from these too
+            logger.info(f"Email event received - this might contain user info we can use")
+            # For now, just acknowledge the event
+            return {"status": "success", "message": "Email event acknowledged"}
+        elif event_type == "user.updated":
+            # Handle user updates (like email verification)
+            try:
+                clerk_user_id = data.get("id")
+                email_addresses = data.get("email_addresses", [])
+                
+                if email_addresses:
+                    email = email_addresses[0].get("email_address")
+                    logger.info(f"Updating user {clerk_user_id} with email: {email}")
+                    
+                    db = get_supabase_client()
+                    # Update existing user or create if doesn't exist
+                    existing_user = db.table('users').select('*').eq('clerk_user_id', clerk_user_id).execute()
+                    if existing_user.data:
+                        # Update existing user
+                        db.table('users').update({'email': email}).eq('clerk_user_id', clerk_user_id).execute()
+                        logger.info(f"Updated user {clerk_user_id} email to {email}")
+                    else:
+                        # Create new user
+                        new_user_data = {
+                            'clerk_user_id': clerk_user_id,
+                            'email': email
+                        }
+                        result = db.table('users').insert(new_user_data).execute()
+                        logger.info(f"Created user {clerk_user_id} with email {email}")
+                
+                return {"status": "success", "message": "User updated"}
+            except Exception as e:
+                logger.error(f"Error updating user: {e}")
+                return {"status": "error", "message": str(e)}
         else:
             logger.info(f"Unhandled event type: {event_type}")
 

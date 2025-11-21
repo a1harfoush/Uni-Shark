@@ -58,10 +58,21 @@ def initialize_driver(headless=True):
     options.add_argument("--disable-notifications")
     options.add_argument("--disable-popup-blocking")
     options.add_argument("--log-level=3")
-    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--window-size=1280,720")  # Reduced window size for memory
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    
+    # Memory optimization options for Heroku
+    options.add_argument("--memory-pressure-off")
+    options.add_argument("--max_old_space_size=256")  # Limit V8 heap to 256MB
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-renderer-backgrounding")
+    options.add_argument("--disable-backgrounding-occluded-windows")
+    options.add_argument("--disable-features=TranslateUI")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-plugins")
+    # options.add_argument("--disable-images")  # Disable image loading to save memory
     
     # Set page load strategy for better performance
     options.page_load_strategy = 'normal'

@@ -44,16 +44,27 @@ def get_dashboard_data(
     user_timezone: str = "UTC" # Default to UTC, but expect from frontend
 ):
     import pytz
-    # 1. Get internal user ID
-    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).single().execute()
+    # 1. Get internal user ID - create user if doesn't exist
+    user_response = db.table('users').select('id').eq('clerk_user_id', clerk_user_id).execute()
     if not user_response.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    user_id = user_response.data['id']
+        # Auto-create the user if they don't exist
+        try:
+            # Use a placeholder email if we don't have the real one
+            placeholder_email = f"{clerk_user_id}@placeholder.unishark.site"
+            upsert_result = db.table('users').insert({
+                'clerk_user_id': clerk_user_id,
+                'email': placeholder_email
+            }).execute()
+            user_id = upsert_result.data[0]['id']
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create user profile: {str(e)}")
+    else:
+        user_id = user_response.data[0]['id']
 
     # 2. Check if user has set credentials (is onboarded)
     try:
-        creds_response = db.table('user_credentials').select('dulms_username').eq('user_id', user_id).single().execute()
-        is_onboarded = bool(creds_response.data and creds_response.data.get('dulms_username'))
+        creds_response = db.table('user_credentials').select('dulms_username').eq('user_id', user_id).execute()
+        is_onboarded = bool(creds_response.data and len(creds_response.data) > 0 and creds_response.data[0].get('dulms_username'))
     except Exception as e:
         # User has no credentials yet (new user)
         print(f"DEBUG: User {user_id} has no credentials yet: {e}")

@@ -3,15 +3,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/Alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
   RefreshCw,
   Shield,
   Wifi,
@@ -61,7 +61,7 @@ const ErrorDashboard: React.FC = () => {
   const fetchErrorData = async () => {
     try {
       setRefreshing(true);
-      
+
       // Fetch all error data in parallel
       const [historyRes, summaryRes, statusRes] = await Promise.all([
         fetch('/api/errors/history'),
@@ -140,7 +140,7 @@ const ErrorDashboard: React.FC = () => {
   };
 
   const formatErrorType = (errorType: string) => {
-    return errorType.split('_').map(word => 
+    return errorType.split('_').map(word =>
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
@@ -165,9 +165,9 @@ const ErrorDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Scraping Status</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fetchErrorData}
               disabled={refreshing}
             >
@@ -182,7 +182,7 @@ const ErrorDashboard: React.FC = () => {
                 <p className="font-medium">{scrapingStatus.status_message}</p>
                 {scrapingStatus.consecutive_failures > 0 && (
                   <p className="text-sm opacity-75">
-                    {scrapingStatus.consecutive_failures} consecutive failures 
+                    {scrapingStatus.consecutive_failures} consecutive failures
                     (max: {scrapingStatus.max_failures_before_suspension})
                   </p>
                 )}
@@ -200,9 +200,9 @@ const ErrorDashboard: React.FC = () => {
                       Suspended at: {formatDateTime(scrapingStatus.suspended_at)}
                     </p>
                   )}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="mt-3"
                     onClick={resetSuspension}
                   >
@@ -279,7 +279,7 @@ const ErrorDashboard: React.FC = () => {
               <TabsTrigger value="recent">Recent Errors</TabsTrigger>
               <TabsTrigger value="all">All History</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="recent" className="space-y-4">
               {errorHistory.filter(error => error.error_type !== 'success').slice(0, 10).map((error) => (
                 <div key={error.id} className="border rounded-lg p-4 space-y-2">
@@ -308,7 +308,7 @@ const ErrorDashboard: React.FC = () => {
                   )}
                 </div>
               ))}
-              
+
               {errorHistory.filter(error => error.error_type !== 'success').length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
@@ -316,12 +316,11 @@ const ErrorDashboard: React.FC = () => {
                 </div>
               )}
             </TabsContent>
-            
+
             <TabsContent value="all" className="space-y-4">
               {errorHistory.map((error) => (
-                <div key={error.id} className={`border rounded-lg p-4 space-y-2 ${
-                  error.error_type === 'success' ? 'bg-green-50 border-green-200' : ''
-                }`}>
+                <div key={error.id} className={`border rounded-lg p-4 space-y-2 ${error.error_type === 'success' ? 'bg-green-50 border-green-200' : ''
+                  }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       {error.error_type === 'success' ? (
@@ -345,7 +344,7 @@ const ErrorDashboard: React.FC = () => {
                   <p className="text-sm">{error.error_message}</p>
                 </div>
               ))}
-              
+
               {errorHistory.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Clock className="h-12 w-12 mx-auto mb-4" />

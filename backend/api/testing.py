@@ -12,7 +12,7 @@ import logging
 router = APIRouter()
 
 # --- Clerk JWT Verification (reused from settings.py) ---
-CLERK_JWKS_URL = "https://curious-boxer-5.clerk.accounts.dev/.well-known/jwks.json"
+CLERK_JWKS_URL = "https://clerk.unishark.site/.well-known/jwks.json"
 jwks = None
 
 async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> str:
@@ -20,8 +20,17 @@ async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> s
     if authorization is None:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
+    # Check if authorization header has the correct format
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    
     try:
-        token = authorization.split(" ")[1]
+        parts = authorization.split(" ")
+        if len(parts) != 2:
+            raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+        token = parts[1]
+        if not token:
+            raise HTTPException(status_code=401, detail="Token is empty")
     except IndexError:
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
 
@@ -36,7 +45,7 @@ async def get_current_clerk_id(authorization: Optional[str] = Header(None)) -> s
             token,
             key,
             algorithms=[header["alg"]],
-            issuer="https://curious-boxer-5.clerk.accounts.dev",
+            issuer="https://clerk.unishark.site",
         )
         return claims["sub"]
     except (JOSEError, IndexError, KeyError) as e:
