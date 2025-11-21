@@ -1,10 +1,7 @@
 // /frontend/src/components/ui/index.ts
 
 export { Button } from './Button';
-export { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from './Card';
-export { Badge } from './badge';
-export { Alert, AlertTitle, AlertDescription } from './alert';
-export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { Card } from './Card';
 export { InputField } from './InputField';
 export { Select } from './Select';
 export { Switch } from './Switch';
