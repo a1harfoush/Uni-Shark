@@ -67,10 +67,13 @@ def main() -> None:
         logger.error("TELEGRAM_BOT_TOKEN is not set. The bot cannot start.")
         return
 
-    # Create the Application with optimizations
+    # Create the Application with optimizations and proper timeouts
     application = (Application.builder()
                   .token(TELEGRAM_BOT_TOKEN)
                   .concurrent_updates(1)  # Limit concurrent updates
+                  .get_updates_read_timeout(30)  # Proper way to set read timeout
+                  .get_updates_write_timeout(30)  # Proper way to set write timeout
+                  .get_updates_connect_timeout(30)  # Proper way to set connect timeout
                   .build())
 
     # Add handlers
@@ -81,11 +84,8 @@ def main() -> None:
     logger.info("Bot is starting with resource optimizations...")
     application.run_polling(
         poll_interval=30.0,  # Much longer polling interval (30 seconds)
-        timeout=20,          # Longer timeout for efficiency
-        bootstrap_retries=2, # Fewer bootstrap retries
-        read_timeout=30,     # Longer read timeout
-        write_timeout=30,    # Longer write timeout
-        connect_timeout=30   # Longer connect timeout
+        timeout=20,          # Timeout for getUpdates
+        bootstrap_retries=2  # Fewer bootstrap retries
     )
     logger.info("Bot has stopped.")
 
