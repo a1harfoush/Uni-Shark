@@ -8,5 +8,5 @@ setup:
   addons: []  # No Heroku Redis; using external free Redis Cloud
 
 run:
-  web: uvicorn main:app --host 0.0.0.0 --port $PORT  # Starts API
+  web: bash -c "cd backend && python telegram_bot.py & uvicorn main:app --host 0.0.0.0 --port $PORT"  # Starts Telegram bot in background + API
   worker: celery -A tasks worker -B --loglevel=info -Q manual,background -c 1  # Merged worker with embedded scheduler (-B flag)

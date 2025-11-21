@@ -52,27 +52,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Handle regular text messages."""
     message_text = update.message.text
     
-    if message_text == "كسمك":
+    if "كسمك" in message_text:
         await update.message.reply_text("الله يسامحك")
     elif "حرفوش" in message_text:
         await update.message.reply_text("حرفوش عمك")
 
 def main() -> None:
-    """Start the bot."""
+    """Start the bot with resource optimizations."""
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN is not set. The bot cannot start.")
         return
 
-    # Create the Application and pass it your bot's token.
-    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    # Create the Application with optimizations
+    application = (Application.builder()
+                  .token(TELEGRAM_BOT_TOKEN)
+                  .concurrent_updates(1)  # Limit concurrent updates
+                  .build())
 
-    # on different commands - answer in Telegram
+    # Add handlers
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Run the bot until the user presses Ctrl-C
-    logger.info("Bot is starting...")
-    application.run_polling()
+    # Run with optimized settings
+    logger.info("Bot is starting with resource optimizations...")
+    application.run_polling(
+        poll_interval=2.0,  # Increase polling interval to reduce API calls
+        timeout=10,         # Reduce timeout
+        bootstrap_retries=3 # Limit bootstrap retries
+    )
     logger.info("Bot has stopped.")
 
 if __name__ == "__main__":
