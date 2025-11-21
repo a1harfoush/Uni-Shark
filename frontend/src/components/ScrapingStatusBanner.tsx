@@ -127,7 +127,7 @@ const ScrapingStatusBanner: React.FC = () => {
             {status.status.toUpperCase()}
           </Badge>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setDismissed(true)}
             className="h-6 w-6 p-0"

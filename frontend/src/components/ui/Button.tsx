@@ -28,7 +28,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           },
           className
         )}
->>>>>>> Local
         ref={ref}
         {...props}
       />
