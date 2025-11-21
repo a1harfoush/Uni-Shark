@@ -7,11 +7,15 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Enable logging
+# Enable logging with reduced verbosity
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.WARNING
 )
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)  # Keep our bot logs but reduce httpx noise
+
+# Reduce httpx logging noise
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -76,9 +80,12 @@ def main() -> None:
     # Run with optimized settings
     logger.info("Bot is starting with resource optimizations...")
     application.run_polling(
-        poll_interval=2.0,  # Increase polling interval to reduce API calls
-        timeout=10,         # Reduce timeout
-        bootstrap_retries=3 # Limit bootstrap retries
+        poll_interval=30.0,  # Much longer polling interval (30 seconds)
+        timeout=20,          # Longer timeout for efficiency
+        bootstrap_retries=2, # Fewer bootstrap retries
+        read_timeout=30,     # Longer read timeout
+        write_timeout=30,    # Longer write timeout
+        connect_timeout=30   # Longer connect timeout
     )
     logger.info("Bot has stopped.")
 
